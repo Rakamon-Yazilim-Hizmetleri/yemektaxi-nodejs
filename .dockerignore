@@ -1,0 +1,21 @@
+# add git-ignore syntax here of things you don't want copied into docker image
+.idea/
+.git
+.idea
+.github
+.circleci
+.docker
+deploy.sh
+.dockerignore
+*Dockerfile*
+*docker-compose*
+node_modules
+npm-debug.log
+backups
+dist
+sample.env
+.prettierrc
+.prettierignore
+nginx.conf
+*.md
+*.sh

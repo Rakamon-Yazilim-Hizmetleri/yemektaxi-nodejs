@@ -1,0 +1,82 @@
+version: "3.8"
+
+services:
+  db:
+    container_name: yemektaxi-db
+    image: postgres:15-alpine
+    # log all slow queries to console
+    command: ["postgres", "-c", "log_min_duration_statement=1000"]
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # initial data is handled by migrations
+      # uncomment this if you want to use a db init script
+      - ./.docker/db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    networks:
+      - app_network
+  backend:
+    container_name: backend
+    build: .
+    ports:
+      - "5001:5001"
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=db
+      - REDIS_HOST=redis
+    depends_on:
+      - db
+    networks:
+      - app_network
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - app_network
+    depends_on:
+      - backend
+  pgbackups:
+    container_name: pgbackups
+    image: prodrigestivill/postgres-backup-local
+    restart: always
+    volumes:
+      - ./backups:/backups
+    links:
+      - db
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_EXTRA_OPTS=-Z6
+      - SCHEDULE=@daily
+      - BACKUP_KEEP_DAYS=7
+      - BACKUP_KEEP_WEEKS=4
+      - BACKUP_KEEP_MONTHS=6
+      - HEALTHCHECK_PORT=8080
+    networks:
+      - app_network
+networks:
+  app_network:
+    name: app_network
+    driver: bridge
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

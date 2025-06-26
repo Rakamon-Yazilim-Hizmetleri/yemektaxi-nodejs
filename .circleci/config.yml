@@ -1,0 +1,32 @@
+version: 2.1
+executors:
+  base-docker:
+    resource_class: small
+    docker:
+      - image: cimg/base:stable
+
+jobs:
+  deploy:
+    parameters:
+      deploy-to:
+        type: string
+    executor: base-docker
+    steps:
+      - run:
+          name: Deploy
+          command: |
+            ssh ubuntu@<<parameters.deploy-to>> -o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" 'cd /home/ubuntu/yemektaxi-backend && ./deploy.sh'
+
+  release:
+    executor: base-docker
+    steps:
+      - checkout
+workflows:
+  main:
+    jobs:
+      - deploy:
+          deploy-to: 3.75.239.153
+          filters:
+            branches:
+              only:
+                - main

@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  db:
+    container_name: yemektaxi-db
+    image: postgres:15-alpine
+    # log all slow queries to console
+    command: ["postgres", "-c", "log_min_duration_statement=1000"]
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # initial data is handled by migrations
+      # uncomment this if you want to use a db init script
+      - ./.docker/db/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+volumes:
+  pgdata:
