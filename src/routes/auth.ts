@@ -55,7 +55,7 @@ const createResponse = <T>(
 
 /**
  * @swagger
- * /api/Auth/Register:
+ * /api/Auth/Signup:
  *   post:
  *     summary: Register a new user
  *     description: Create a new user account with email and password. User will be in pending status until email/phone verification is completed.
@@ -151,7 +151,7 @@ const createResponse = <T>(
  *               $ref: '#/components/schemas/Error'
  */
 router.post(
-  "/Register",
+  "/Signup",
   [
     body("firstName")
       .trim()
