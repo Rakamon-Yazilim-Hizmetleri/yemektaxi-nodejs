@@ -55,7 +55,7 @@ const createResponse = <T>(
 
 /**
  * @swagger
- * /api/auth/Register:
+ * /api/Auth/Register:
  *   post:
  *     summary: Register a new user
  *     description: Create a new user account with email and password. User will be in pending status until email/phone verification is completed.
@@ -271,7 +271,7 @@ router.post(
 
 /**
  * @swagger
- * /api/auth/Login:
+ * /api/Auth/Login:
  *   post:
  *     summary: Login user
  *     description: Authenticate user with email and password
@@ -428,24 +428,19 @@ router.post("/Login", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/auth/RefreshToken:
- *   post:
+ * /api/Auth/RefreshToken:
+ *   get:
  *     summary: Refresh access token
  *     description: Generate a new access token using a valid refresh token
  *     tags: [Authentication]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - refreshToken
- *             properties:
- *               refreshToken:
- *                 type: string
- *                 description: Valid refresh token
- *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     parameters:
+ *       - in: query
+ *         name: refreshToken
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Valid refresh token
+ *         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *     responses:
  *       200:
  *         description: Token refreshed successfully
@@ -496,9 +491,10 @@ router.post("/Login", async (req: Request, res: Response) => {
  *       500:
  *         description: Internal server error
  */
-router.post("/RefreshToken", async (req: Request, res: Response) => {
+router.get("/RefreshToken", async (req: Request, res: Response) => {
   try {
-    const { refreshToken } = req.body;
+    // Read from query parameter only
+    const refreshToken = req.query.refreshToken as string;
 
     if (!refreshToken) {
       return res
@@ -563,7 +559,7 @@ router.post("/RefreshToken", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/auth/CheckUser:
+ * /api/Auth/CheckUser:
  *   post:
  *     summary: Check if user can be registered
  *     description: Validate user information before registration (email, phone, identity number uniqueness)
@@ -770,7 +766,7 @@ router.post(
 
 /**
  * @swagger
- * /api/auth/SaveRestaurant:
+ * /api/Auth/SaveRestaurant:
  *   post:
  *     summary: Save restaurant information
  *     description: Create a new restaurant for a verified user
@@ -925,7 +921,7 @@ router.post("/SaveRestaurant", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/auth/Me:
+ * /api/Auth/Me:
  *   get:
  *     summary: Get current user profile
  *     description: Retrieve the authenticated user's profile information
@@ -954,7 +950,7 @@ router.post("/SaveRestaurant", async (req: Request, res: Response) => {
  */
 /**
  * @swagger
- * /api/auth/SaveBusinessDocument:
+ * /api/Auth/SaveBusinessDocument:
  *   post:
  *     summary: Save business documents for restaurant
  *     description: Upload and save business documents for restaurant verification
@@ -1061,7 +1057,7 @@ router.post("/SaveBusinessDocument", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/auth/SendConfirmationEmail:
+ * /api/Auth/SendConfirmationEmail:
  *   post:
  *     summary: Send email verification code
  *     description: Send a verification code to user's email address
@@ -1117,7 +1113,7 @@ router.post("/SendConfirmationEmail", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/auth/VerifyEmail:
+ * /api/Auth/VerifyEmail:
  *   post:
  *     summary: Verify email with code
  *     description: Verify user's email address with the verification code
@@ -1167,7 +1163,7 @@ router.post("/VerifyEmail", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/auth/SendOtpCode:
+ * /api/Auth/SendOtpCode:
  *   post:
  *     summary: Send OTP code to phone
  *     description: Send a verification code to user's phone number
@@ -1219,7 +1215,7 @@ router.post("/SendOtpCode", async (req: Request, res: Response) => {
 
 /**
  * @swagger
- * /api/auth/OtpVerification:
+ * /api/Auth/OtpVerification:
  *   post:
  *     summary: Verify OTP code
  *     description: Verify the OTP code sent to user's phone
