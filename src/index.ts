@@ -82,9 +82,7 @@ app.listen(PORT, () => {
   logger.info(`
     🚀  Server is running!
     🔉  Listening on port ${PORT}
-    📭  API available at ${
-      process.env.SITE_URL || "http://localhost"
-    }:${PORT} 💾  Database connected with Prisma
+    📭  API available at ${process.env.SITE_URL || "http://localhost"}:${PORT} 
     🔗  Swagger available at ${
       process.env.SITE_URL || "http://localhost"
     }:${PORT}/api-docs

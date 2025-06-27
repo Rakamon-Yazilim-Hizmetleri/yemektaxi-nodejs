@@ -37,10 +37,12 @@ model User {
   deviceId               String?   @map("device_id")
   status                 String    @default("Active")
 
-  restaurant   Restaurant?   @relation(fields: [restaurantId], references: [id])
-  userRoles    UserRole[]
-  activityLogs ActivityLog[]
-  tickets      Ticket[]
+  restaurant        Restaurant?         @relation(fields: [restaurantId], references: [id])
+  userRoles         UserRole[]
+  activityLogs      ActivityLog[]
+  tickets           Ticket[]
+  EmailVerification EmailVerification[]
+  OtpVerification   OtpVerification[]
 
   @@map("users")
 }
@@ -295,4 +297,39 @@ model ActivityLog {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("activity_logs")
+}
+
+// Email Verification
+model EmailVerification {
+  id           String   @id @default(uuid()) @db.Uuid
+  generateDate DateTime @default(now()) @map("generate_date") @db.Timestamptz
+  updatedDate  DateTime @updatedAt @map("updated_date") @db.Timestamptz
+
+  userId       String  @map("user_id") @db.Uuid
+  email        String
+  code         String
+  verification Boolean @default(false)
+  status       String  @default("Active")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verifications")
+}
+
+// OTP Verification
+model OtpVerification {
+  id           String   @id @default(uuid()) @db.Uuid
+  generateDate DateTime @default(now()) @map("generate_date") @db.Timestamptz
+  updatedDate  DateTime @updatedAt @map("updated_date") @db.Timestamptz
+  isDeleted    Boolean  @default(false) @map("is_deleted")
+
+  userId       String  @map("user_id") @db.Uuid
+  phoneNumber  String  @map("phone_number")
+  code         String
+  verification Boolean @default(false)
+  status       String  @default("Active")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("otp_verifications")
 }
