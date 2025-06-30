@@ -71,11 +71,9 @@ router.get("/", async (req: Request, res: Response) => {
         select: {
           id: true,
           name: true,
-          email: true,
+          mail: true,
           phoneNumber: true,
           confirmationStatus: true,
-          status: true,
-          isOpen: true,
           createdDate: true,
         },
         skip,
@@ -159,32 +157,10 @@ router.get("/:id", async (req: Request, res: Response) => {
     const restaurant = await prisma.restaurant.findUnique({
       where: { id, isDeleted: false },
       include: {
-        users: {
-          where: { isDeleted: false },
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-        foods: {
-          where: { isDeleted: false },
-          select: {
-            id: true,
-            name: true,
-            price: true,
-            status: true,
-          },
-        },
-        categories: {
-          where: { isDeleted: false },
-          select: {
-            id: true,
-            name: true,
-            status: true,
-          },
-        },
+        foods: true,
+        //categories: true,
+        //subCategories: true,
+        //options: true,
       },
     });
 
@@ -211,10 +187,9 @@ router.post("/", async (req: Request, res: Response) => {
       select: {
         id: true,
         name: true,
-        email: true,
+        mail: true,
         phoneNumber: true,
         confirmationStatus: true,
-        status: true,
         createdDate: true,
       },
     });
@@ -243,10 +218,9 @@ router.put("/:id", async (req: Request, res: Response) => {
       select: {
         id: true,
         name: true,
-        email: true,
+        mail: true,
         phoneNumber: true,
         confirmationStatus: true,
-        status: true,
         updatedDate: true,
       },
     });

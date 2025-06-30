@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Predict" ALTER COLUMN "prompt" DROP NOT NULL,
-ALTER COLUMN "url" DROP NOT NULL;

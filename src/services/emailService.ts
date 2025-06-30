@@ -61,10 +61,9 @@ export class EmailService {
       // Check if verification email already exists within last 24 hours
       const emailVerificationExists = await prisma.emailVerification.findFirst({
         where: {
-          userId,
           email: toEmail,
-          verification: false,
-          generateDate: {
+          isDeleted: false,
+          createdDate: {
             gt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
           },
           status: "Active",
@@ -147,10 +146,11 @@ export class EmailService {
       // Save verification code to database
       await prisma.emailVerification.create({
         data: {
-          userId,
           email: toEmail,
-          code: verificationCode,
-          verification: false,
+          token: verificationCode,
+          expiryDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          updatedBy: "system",
+          isDeleted: false,
           status: "Active",
         },
       });
@@ -190,11 +190,10 @@ export class EmailService {
       // Find the verification record
       const emailVerification = await prisma.emailVerification.findFirst({
         where: {
-          userId,
-          code,
-          verification: false,
+          email: user.email,
+          isDeleted: false,
           status: "Active",
-          generateDate: {
+          createdDate: {
             gt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
           },
         },
@@ -213,7 +212,16 @@ export class EmailService {
           id: emailVerification.id,
         },
         data: {
-          verification: true,
+          isDeleted: true,
+        },
+      });
+
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          emailVerification: true,
         },
       });
 

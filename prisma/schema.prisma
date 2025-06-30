@@ -1,335 +1,1020 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "postgresql" // or "mysql", "sqlite", etc.
   url      = env("DATABASE_URL")
 }
 
-// User Management
+// Base fields that all entities inherit
 model User {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  firstName              String    @map("first_name")
-  lastName               String    @map("last_name")
-  email                  String    @unique
+  // User specific fields
+  firstName              String
+  lastName               String
   password               String
   title                  String?
-  restaurantId           String?   @map("restaurant_id") @db.Uuid
-  emailVerification      Boolean   @default(false) @map("email_verification")
-  phoneVerification      Boolean   @default(false) @map("phone_verification")
-  checkIdentity          Boolean   @default(false) @map("check_identity")
-  refreshToken           String?   @map("refresh_token")
-  refreshTokenExpiryTime DateTime? @map("refresh_token_expiry_time") @db.Timestamptz
-  yearOfBirth            Int       @map("year_of_birth")
-  phoneNumber            String?   @map("phone_number")
-  identityNumber         String?   @map("identity_number")
+  restaurantId           String?
+  emailVerification      Boolean   @default(false)
+  phoneVerification      Boolean   @default(false)
+  checkIdentity          Boolean   @default(false)
+  refreshToken           String?
+  refreshTokenExpiryTime DateTime?
+  email                  String    @unique
+  yearOfBirth            Int
+  phoneNumber            String?
+  identityNumber         String?
   address                String?
-  imageUrl               String?   @map("image_url")
-  lastLoginDate          DateTime  @default(now()) @map("last_login_date") @db.Timestamptz
-  isNewUser              Boolean   @default(true) @map("is_new_user")
-  isAuthUser             Boolean   @default(false) @map("is_auth_user")
-  confirmationStatus     String    @default("Pending") @map("confirmation_status")
-  deviceId               String?   @map("device_id")
-  status                 String    @default("Active")
+  imageUrl               String?
+  lastLoginDate          DateTime
+  isNewUser              Boolean   @default(true)
+  isAuthUser             Boolean   @default(false)
+  confirmationStatus     String
+  deviceId               String?
 
-  restaurant        Restaurant?         @relation(fields: [restaurantId], references: [id])
-  userRoles         UserRole[]
-  activityLogs      ActivityLog[]
-  tickets           Ticket[]
-  EmailVerification EmailVerification[]
-  OtpVerification   OtpVerification[]
+  // Relations
+  restaurant         Restaurant?         @relation(fields: [restaurantId], references: [id])
+  userRoles          UserRole[]
+  customer           Customer?
+  otpVerifications   OtpVerification[]
+  activityLogs       ActivityLog[]
+  createdTickets     Ticket[]            @relation("TicketCreatedBy")
+  repliedTickets     FeedBack[]          @relation("FeedBackRepliedBy")
+  emailVerifications EmailVerification[]
 
-  @@map("users")
+  @@map("Users")
 }
 
 model Restaurant {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  ownerId                    String  @map("owner_id") @db.Uuid
+  // Restaurant specific fields
+  ownerId                    String
   name                       String
-  phoneNumber                String  @map("phone_number")
-  taxNumber                  String? @map("tax_number")
-  taxOffice                  String? @map("tax_office")
-  email                      String  @map("mail")
-  mersisNumber               String? @map("mersis_number")
-  registrationNumber         String? @map("registration_number")
-  customerServicePhoneNumber String? @map("customer_service_phone_number")
-  confirmationStatus         String  @default("Pending") @map("confirmation_status")
+  phoneNumber                String
+  taxNumber                  String?
+  taxOffice                  String?
+  mail                       String
+  mersisNumber               String?
+  registrationNumber         String?
+  customerServicePhoneNumber String?
+  confirmationStatus         String?
   logo                       String?
-  imageUrl                   String? @map("image_url")
-  mainRestaurantId           String? @map("main_restaurant_id") @db.Uuid
-  isOpen                     Boolean @default(true) @map("is_open")
-  status                     String  @default("Active")
+  imageUrl                   String?
+  mainRestaurantId           String?
+  isOpen                     Boolean @default(false)
 
-  users         User[]
-  foods         Food[]
-  categories    Category[]
-  subCategories SubCategory[]
-  campaigns     Campaign[]
-  options       Option[]
+  // Relations
+  users               User[]
+  cuisineRestaurants  CuisineRestaurant[]
+  tables              Table[]
+  workingHours        RestaurantWorkingHour[]
+  files               File[]
+  categories          Category[]
+  subCategories       SubCategory[]
+  foods               Food[]
+  options             Option[]
+  campaigns           Campaign[]
+  areas               Area[]
+  roles               Role[]
+  ingredients         Ingredient[]
+  activityLogs        ActivityLog[]
+  tickets             Ticket[]
+  feedBacks           FeedBack[]
+  addresses           RestaurantAddress[]
+  serviceWorkingHours ServiceWorkingHour[]
+  restaurantImages    RestaurantImage[]
+  restaurantDocuments RestaurantDocuments[]
 
-  @@map("restaurants")
-}
-
-model Food {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
-
-  name                  String
-  description           String
-  imageUrl              String  @map("image_url")
-  restaurantId          String  @map("restaurant_id") @db.Uuid
-  priority              String?
-  activeTime            String? @map("active_time")
-  productsToBeExtracted String? @map("products_to_be_extracted")
-  preparationTime       String? @map("preparation_time")
-  price                 Float
-  discountPrice         Float   @default(0) @map("discount_price")
-  confirmationStatus    String  @default("Pending") @map("confirmation_status")
-  rejectMessage         String? @map("reject_message")
-  status                String  @default("Active")
-
-  restaurant     Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  foodCampaigns  FoodCampaign[]
-  foodCategories FoodCategory[]
-
-  @@map("foods")
+  @@map("Restaurants")
 }
 
 model Category {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
+  // Category specific fields
   name               String
   description        String?
-  imageUrl           String? @map("image_url")
-  restaurantId       String  @map("restaurant_id") @db.Uuid
+  imageUrl           String
+  restaurantId       String
   priority           String?
-  confirmationStatus String  @default("Pending") @map("confirmation_status")
-  rejectMessage      String? @map("reject_message")
-  status             String  @default("Active")
+  confirmationStatus String
+  rejectMessage      String?
 
-  restaurant     Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  foodCategories FoodCategory[]
+  // Relations
+  restaurant            Restaurant            @relation(fields: [restaurantId], references: [id])
+  foodCategories        FoodCategory[]
+  categorySubCategories CategorySubCategory[]
+  optionCategories      OptionCategory[]
 
-  @@map("categories")
+  @@map("Categories")
 }
 
 model SubCategory {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
+  // SubCategory specific fields
   name               String
-  description        String?
-  imageUrl           String? @map("image_url")
-  restaurantId       String  @map("restaurant_id") @db.Uuid
+  description        String
+  multipleChoice     Boolean @default(false)
+  forcedChoice       Boolean @default(false)
+  restaurantId       String
   priority           String?
-  confirmationStatus String  @default("Pending") @map("confirmation_status")
-  rejectMessage      String? @map("reject_message")
-  status             String  @default("Active")
+  confirmationStatus String
+  rejectMessage      String?
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  // Relations
+  restaurant            Restaurant            @relation(fields: [restaurantId], references: [id])
+  categorySubCategories CategorySubCategory[]
+  optionSubCategories   OptionSubCategory[]
+  foodSubCategories     FoodSubCategory[]
 
-  @@map("sub_categories")
+  @@map("SubCategories")
 }
 
-model Campaign {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+model Food {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  name               String
-  description        String?
-  imageUrl           String?  @map("image_url")
-  restaurantId       String   @map("restaurant_id") @db.Uuid
-  discountPercent    Float    @map("discount_percent")
-  startDate          DateTime @map("start_date") @db.Timestamptz
-  endDate            DateTime @map("end_date") @db.Timestamptz
-  isActive           Boolean  @default(true) @map("is_active")
-  minOrderAmount     Float?   @map("min_order_amount")
-  maxDiscountAmount  Float?   @map("max_discount_amount")
-  usageLimit         Int?     @map("usage_limit")
-  usageCount         Int      @default(0) @map("usage_count")
-  confirmationStatus String   @default("Pending") @map("confirmation_status")
-  rejectMessage      String?  @map("reject_message")
-  status             String   @default("Active")
+  // Food specific fields
+  name                  String
+  description           String
+  imageUrl              String
+  restaurantId          String
+  priority              String?
+  activeTime            String?
+  productsToBeExtracted String?
+  preparationTime       String?
+  price                 Float
+  discountPrice         Float
+  confirmationStatus    String
+  rejectMessage         String?
 
-  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
-  foodCampaigns FoodCampaign[]
+  // Relations
+  restaurant               Restaurant                @relation(fields: [restaurantId], references: [id])
+  foodCampaigns            FoodCampaign[]
+  foodSubCategories        FoodSubCategory[]
+  foodCategories           FoodCategory[]
+  foodRemovableIngredients FoodRemovableIngredient[]
 
-  @@map("campaigns")
+  @@map("Foods")
 }
 
 model Option {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
+  // Option specific fields
+  name                 String
+  imageUrl             String
+  stock                Int
+  paid                 Boolean @default(false)
+  price                Float
+  restaurantId         String
+  confirmationStatus   String
+  rejectMessage        String?
+  showInMenuEnrichment Boolean @default(false)
+
+  // Relations
+  restaurant                 Restaurant                  @relation(fields: [restaurantId], references: [id])
+  optionSubCategories        OptionSubCategory[]
+  optionCategories           OptionCategory[]
+  optionRemovableIngredients OptionRemovableIngredient[]
+
+  @@map("Options")
+}
+
+model Campaign {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Campaign specific fields
   name               String
-  description        String?
-  imageUrl           String? @map("image_url")
-  restaurantId       String  @map("restaurant_id") @db.Uuid
-  price              Float
-  discountPrice      Float   @default(0) @map("discount_price")
-  priority           String?
-  activeTime         String? @map("active_time")
-  preparationTime    String? @map("preparation_time")
-  confirmationStatus String  @default("Pending") @map("confirmation_status")
-  rejectMessage      String? @map("reject_message")
-  status             String  @default("Active")
+  description        String
+  startDate          DateTime
+  endDate            DateTime
+  numberOfUses       Int
+  usageLimit         Int?
+  minOrderAmount     Float
+  ratio              Float?
+  usageType          String
+  restaurantId       String
+  confirmationStatus String
+  rejectMessage      String?
+  code               String?
+  banner             String?
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  // Relations
+  restaurant    Restaurant     @relation(fields: [restaurantId], references: [id])
+  foodCampaigns FoodCampaign[]
 
-  @@map("options")
+  @@map("Campaigns")
+}
+
+model Cuisine {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Cuisine specific fields
+  name     String
+  imageUrl String
+  priority String
+
+  // Relations
+  cuisineRestaurants CuisineRestaurant[]
+
+  @@map("Cuisines")
+}
+
+model Area {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Area specific fields
+  name               String
+  restaurantId       String
+  imageUrl           String
+  confirmationStatus String
+  rejectMessage      String?
+
+  // Relations
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("Areas")
+}
+
+model Table {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Table specific fields
+  name                String
+  capacity            Int
+  areaId              String?
+  automaticAssignment Boolean @default(false)
+  confirmationStatus  String
+  rejectMessage       String?
+  restaurantId        String
+
+  // Relations
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("Tables")
+}
+
+model Customer {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Customer specific fields
+  userId String @unique
+
+  // Relations
+  user      User              @relation(fields: [userId], references: [id])
+  addresses CustomerAddress[]
+  feedBacks FeedBack[]
+
+  @@map("Customer")
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Role specific fields
+  name         String
+  description  String?
+  restaurantId String
+
+  // Relations
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@map("Roles")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Permission specific fields
+  name        String
+  description String?
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@map("Permissions")
+}
+
+model Service {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Service specific fields
+  name String
+
+  // Relations
+  serviceWorkingHours ServiceWorkingHour[]
+
+  @@map("Services")
+}
+
+model Ingredient {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  // Ingredient specific fields
+  restaurantId String
+  name         String
+  imageUrl     String
+  description  String?
+
+  // Relations
+  restaurant                 Restaurant                  @relation(fields: [restaurantId], references: [id])
+  foodRemovableIngredients   FoodRemovableIngredient[]
+  optionRemovableIngredients OptionRemovableIngredient[]
+
+  @@map("Ingredients")
 }
 
 // Junction Tables
+model UserRole {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  userId String
+  roleId String
+
+  user User @relation(fields: [userId], references: [id])
+  role Role @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, roleId])
+  @@map("UserRoles")
+}
+
+model RolePermission {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  roleId       String
+  permissionId String
+
+  role       Role       @relation(fields: [roleId], references: [id])
+  permission Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("RolePermissions")
+}
+
 model FoodCategory {
-  id         String @id @default(uuid()) @db.Uuid
-  foodId     String @map("food_id") @db.Uuid
-  categoryId String @map("category_id") @db.Uuid
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  food     Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+  foodId     String
 
-  @@unique([foodId, categoryId])
-  @@map("food_categories")
+  category Category @relation(fields: [categoryId], references: [id])
+  food     Food     @relation(fields: [foodId], references: [id])
+
+  @@unique([categoryId, foodId])
+  @@map("FoodCategories")
+}
+
+model FoodSubCategory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  foodId        String
+  subCategoryId String
+
+  food        Food        @relation(fields: [foodId], references: [id])
+  subCategory SubCategory @relation(fields: [subCategoryId], references: [id])
+
+  @@unique([foodId, subCategoryId])
+  @@map("FoodSubCategories")
+}
+
+model CategorySubCategory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  categoryId    String
+  subCategoryId String
+
+  category    Category    @relation(fields: [categoryId], references: [id])
+  subCategory SubCategory @relation(fields: [subCategoryId], references: [id])
+
+  @@unique([categoryId, subCategoryId])
+  @@map("CategorySubCategories")
+}
+
+model OptionCategory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  optionId   String
+  categoryId String
+
+  option   Option   @relation(fields: [optionId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([optionId, categoryId])
+  @@map("OptionCategories")
+}
+
+model OptionSubCategory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  optionId      String
+  subCategoryId String
+
+  option      Option      @relation(fields: [optionId], references: [id])
+  subCategory SubCategory @relation(fields: [subCategoryId], references: [id])
+
+  @@unique([optionId, subCategoryId])
+  @@map("OptionSubCategories")
+}
+
+model CuisineRestaurant {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  cuisineId    String
+  restaurantId String
+
+  cuisine    Cuisine    @relation(fields: [cuisineId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([cuisineId, restaurantId])
+  @@map("CuisineRestaurants")
 }
 
 model FoodCampaign {
-  id         String @id @default(uuid()) @db.Uuid
-  foodId     String @map("food_id") @db.Uuid
-  campaignId String @map("campaign_id") @db.Uuid
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  food     Food     @relation(fields: [foodId], references: [id], onDelete: Cascade)
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  foodId     String
+  campaignId String
+
+  food     Food     @relation(fields: [foodId], references: [id])
+  campaign Campaign @relation(fields: [campaignId], references: [id])
 
   @@unique([foodId, campaignId])
-  @@map("food_campaigns")
+  @@map("FoodCampaigns")
 }
 
-// User Management
-model Role {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+model FoodRemovableIngredient {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  name        String  @unique
-  description String?
+  foodId       String
+  ingredientId String
 
-  userRoles UserRole[]
+  food       Food       @relation(fields: [foodId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
 
-  @@map("roles")
+  @@unique([foodId, ingredientId])
+  @@map("FoodRemovableIngredients")
 }
 
-model UserRole {
-  id     String @id @default(uuid()) @db.Uuid
-  userId String @map("user_id") @db.Uuid
-  roleId String @map("role_id") @db.Uuid
+model OptionRemovableIngredient {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  optionId     String
+  ingredientId String
 
-  @@unique([userId, roleId])
-  @@map("user_roles")
+  option     Option     @relation(fields: [optionId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([optionId, ingredientId])
+  @@map("OptionRemovableIngredients")
 }
 
-// Ticket System
+// Address and Working Hours
+model RestaurantAddress {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  restaurantId    String
+  address         String?
+  optionalAddress String?
+  city            String?
+  district        String?
+  latitude        Float
+  longitude       Float
+  neighbourhood   String?
+  postalCode      String?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("RestaurantAddresses")
+}
+
+model RestaurantWorkingHour {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  restaurantId String
+  dayOfWeek    String
+  openingTime  DateTime?
+  closingTime  DateTime?
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("RestaurantWorkingHours")
+}
+
+model CustomerAddress {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  customerId      String
+  address         String
+  optionalAddress String?
+  latitude        Float
+  longitude       Float
+  city            String
+  district        String
+  neighbourhood   String
+  postalCode      String
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@map("CustomerAddresses")
+}
+
+model ServiceWorkingHour {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  restaurantId String
+  serviceId    String
+  dayOfWeek    String
+  openingTime  String // TimeSpan as string
+  closingTime  String // TimeSpan as string
+  isOpen       Boolean
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  service    Service    @relation(fields: [serviceId], references: [id])
+
+  @@map("ServiceWorkingHours")
+}
+
+// Support and Activity
+model ActivityLog {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  userId       String
+  restaurantId String
+  action       String
+  ipAddress    String
+  userAgent    String
+
+  user       User       @relation(fields: [userId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@map("ActivityLogs")
+}
+
 model ProblemType {
-  id          String  @id @default(uuid()) @db.Uuid
-  name        String  @unique
-  description String?
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  name String
 
   tickets Ticket[]
 
-  @@map("problem_types")
+  @@map("ProblemTypes")
 }
 
 model Ticket {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
-  updatedDate DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted   Boolean  @default(false) @map("is_deleted")
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  userId        String @map("user_id") @db.Uuid
-  problemTypeId String @map("problem_type_id") @db.Uuid
-  subject       String
-  description   String
-  status        String @default("Open")
-  priority      String @default("Medium")
+  title         String
+  priority      String
+  createdUserId String
+  restaurantId  String
+  problemTypeId String
+  closedAt      DateTime?
 
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problemType ProblemType @relation(fields: [problemTypeId], references: [id])
+  createdUser     User             @relation("TicketCreatedBy", fields: [createdUserId], references: [id])
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
+  problemType     ProblemType      @relation(fields: [problemTypeId], references: [id])
+  ticketResponses TicketResponse[]
 
-  @@map("tickets")
+  @@map("Tickets")
 }
 
-// Activity Log
-model ActivityLog {
-  id          String   @id @default(uuid()) @db.Uuid
-  createdDate DateTime @default(now()) @map("created_date") @db.Timestamptz
+model TicketResponse {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  userId      String  @map("user_id") @db.Uuid
-  action      String
-  entity      String
-  entityId    String  @map("entity_id") @db.Uuid
-  description String?
-  ipAddress   String? @map("ip_address")
-  userAgent   String? @map("user_agent")
+  ticketId String
+  message  String
+  userId   String
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket Ticket @relation(fields: [ticketId], references: [id])
 
-  @@map("activity_logs")
+  @@map("TicketResponses")
 }
 
-// Email Verification
-model EmailVerification {
-  id           String   @id @default(uuid()) @db.Uuid
-  generateDate DateTime @default(now()) @map("generate_date") @db.Timestamptz
-  updatedDate  DateTime @updatedAt @map("updated_date") @db.Timestamptz
+model FeedBack {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  userId       String  @map("user_id") @db.Uuid
-  email        String
-  code         String
-  verification Boolean @default(false)
-  status       String  @default("Active")
+  customerId   String
+  restaurantId String
+  comment      String
+  reply        String?
+  replyAt      DateTime
+  rating       Float
+  orderId      String
+  replyUserId  String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  replyUser  User?      @relation("FeedBackRepliedBy", fields: [replyUserId], references: [id])
 
-  @@map("email_verifications")
+  @@map("FeedBacks")
 }
 
-// OTP Verification
+// Files and Verification
+model File {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  restaurantId String
+  fileName     String
+  filePath     String
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("Files")
+}
+
+model RestaurantImage {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  restaurantId String
+  imageUrl     String
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("RestaurantImages")
+}
+
+model RestaurantDocuments {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  restaurantId String
+  documentUrl  String
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@map("RestaurantDocuments")
+}
+
 model OtpVerification {
-  id           String   @id @default(uuid()) @db.Uuid
-  generateDate DateTime @default(now()) @map("generate_date") @db.Timestamptz
-  updatedDate  DateTime @updatedAt @map("updated_date") @db.Timestamptz
-  isDeleted    Boolean  @default(false) @map("is_deleted")
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
 
-  userId       String  @map("user_id") @db.Uuid
-  phoneNumber  String  @map("phone_number")
-  code         String
-  verification Boolean @default(false)
-  status       String  @default("Active")
+  userId       String
+  phoneNumber  String
+  otpCode      String
+  verification Boolean  @default(false)
+  generateDate DateTime
+  uniqueKey    String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("otp_verifications")
+  @@map("OtpVerifications")
+}
+
+model EmailVerification {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  email      String
+  token      String
+  expiryDate DateTime
+  userId     String?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("EmailVerifications")
+}
+
+model Enum {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  name  String
+  value String
+
+  @@map("Enums")
+}
+
+// History Tables (for audit purposes)
+model CategoryHistory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  originalId   String
+  name         String
+  description  String?
+  imageUrl     String
+  restaurantId String
+
+  @@map("CategoryHistories")
+}
+
+model SubCategoryHistory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  originalId  String
+  name        String
+  description String
+
+  @@map("SubCategoryHistories")
+}
+
+model OptionHistory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  originalId String
+  name       String
+  imageUrl   String
+  stock      Int
+  paid       Boolean
+  price      Float
+
+  @@map("OptionHistories")
+}
+
+model FoodHistory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  originalId    String
+  name          String
+  description   String
+  imageUrl      String
+  restaurantId  String
+  price         Float
+  discountPrice Float
+
+  @@map("FoodHistories")
+}
+
+model CampaignHistory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  originalId     String
+  name           String
+  description    String
+  startDate      DateTime
+  endDate        DateTime
+  numberOfUses   Int
+  minOrderAmount Float
+  ratio          Float?
+  usageType      String
+  restaurantId   String
+
+  @@map("CampaignHistories")
+}
+
+model AreaHistory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  originalId String
+  name       String
+
+  @@map("AreaHistories")
+}
+
+model TableHistory {
+  id          String   @id @default(cuid())
+  createdDate DateTime @default(now())
+  updatedDate DateTime @updatedAt
+  isDeleted   Boolean  @default(false)
+  status      String
+  updatedBy   String
+
+  originalId          String
+  name                String
+  capacity            Int
+  areaId              String?
+  automaticAssignment Boolean
+  restaurantId        String
+
+  @@map("TableHistories")
 }

@@ -242,9 +242,11 @@ router.post(
           emailVerification: false,
           phoneVerification: false,
           isNewUser: true,
-          checkIdentity: identityNumber ? false : true, // If identity provided, needs verification
-          confirmationStatus: "Pending", // User needs verification
-          status: "Active", // Initial status
+          checkIdentity: identityNumber ? true : false,
+          confirmationStatus: "Pending",
+          status: "Active",
+          updatedBy: "system",
+          lastLoginDate: new Date(),
         },
         select: {
           id: true,
@@ -339,12 +341,6 @@ router.post("/Login", async (req: Request, res: Response) => {
             role: true,
           },
         },
-        restaurant: {
-          select: {
-            id: true,
-            confirmationStatus: true,
-          },
-        },
       },
     });
 
@@ -353,6 +349,12 @@ router.post("/Login", async (req: Request, res: Response) => {
         .status(401)
         .json(createResponse(false, "Kullanıcı bulunamadı veya şifre yanlış."));
     }
+
+    const userRestaurant = await prisma.restaurant.findFirst({
+      where: {
+        id: user.restaurantId ?? undefined,
+      },
+    });
 
     // Check if user is approved
     if (user.confirmationStatus !== "Approved") {
@@ -410,12 +412,12 @@ router.post("/Login", async (req: Request, res: Response) => {
       lastName: user.lastName,
       email: user.email,
       phoneNumber: user.phoneNumber,
-      restaurantId: user.restaurantId,
+      restaurantId: userRestaurant?.id,
       isNewUser: user.isNewUser,
       status: user.status,
-      confirmationStatus: user.confirmationStatus,
-      Token: tokens.accessToken,
-      RefreshToken: tokens.refreshToken,
+      confirmationStatus: userRestaurant?.confirmationStatus,
+      token: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       roles,
     };
 
@@ -511,14 +513,6 @@ router.get("/RefreshToken", async (req: Request, res: Response) => {
           gt: new Date(),
         },
       },
-      include: {
-        restaurant: {
-          select: {
-            id: true,
-            confirmationStatus: true,
-          },
-        },
-      },
     });
 
     if (!user) {
@@ -528,6 +522,12 @@ router.get("/RefreshToken", async (req: Request, res: Response) => {
           createResponse(false, "Geçersiz veya süresi dolmuş refresh token."),
         );
     }
+
+    const userRestaurant = await prisma.restaurant.findFirst({
+      where: {
+        id: user.restaurantId ?? undefined,
+      },
+    });
 
     // Generate new tokens
     const tokens = generateTokens(user.id, user.email);
@@ -545,10 +545,10 @@ router.get("/RefreshToken", async (req: Request, res: Response) => {
       createResponse(true, "Token yenilendi.", {
         userId: user.id,
         isNewUser: user.isNewUser,
-        restaurantConfirmationStatus: user.restaurant?.confirmationStatus,
+        restaurantConfirmationStatus: userRestaurant?.confirmationStatus,
         checkIdentity: user.checkIdentity,
-        Token: tokens.accessToken,
-        RefreshToken: tokens.refreshToken,
+        token: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       }),
     );
   } catch (error) {
@@ -678,9 +678,6 @@ router.post(
         identityNumber,
         yearOfBirth,
       } = req.body;
-
-      console.log(req.body);
-      console.log("check user");
 
       // Validate user data format
       const userData: UserValidationData = {
@@ -857,7 +854,7 @@ router.post("/SaveRestaurant", async (req: Request, res: Response) => {
     const existingRestaurant = await prisma.restaurant.findFirst({
       where: {
         isDeleted: false,
-        OR: [{ name }, { email: mail }, { phoneNumber }],
+        OR: [{ name }, { mail: mail }, { phoneNumber }],
       },
     });
 
@@ -876,11 +873,11 @@ router.post("/SaveRestaurant", async (req: Request, res: Response) => {
         data: {
           ownerId: userId,
           name,
-          email: mail,
+          mail,
           phoneNumber,
           confirmationStatus: "Pending",
-          status: "Passive",
-          isOpen: true,
+          status: "Active",
+          updatedBy: "system",
         },
       });
 

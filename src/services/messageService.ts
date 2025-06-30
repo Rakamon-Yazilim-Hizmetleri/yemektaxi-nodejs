@@ -87,9 +87,11 @@ export class MessageService {
         await prisma.otpVerification.update({
           where: { id: existingOtpVerification.id },
           data: {
-            code: otpCode,
-            generateDate: new Date(),
-            verification: false,
+            otpCode,
+            createdDate: new Date(),
+            isDeleted: false,
+            status: "Active",
+            updatedBy: "system",
           },
         });
       } else {
@@ -97,9 +99,13 @@ export class MessageService {
           data: {
             userId,
             phoneNumber,
-            code: otpCode,
-            verification: false,
+            otpCode,
+            createdDate: new Date(),
+            generateDate: new Date(),
+            uniqueKey: `${userId}-${phoneNumber}-${Date.now()}`,
+            isDeleted: false,
             status: "Active",
+            updatedBy: "system",
           },
         });
       }
@@ -133,7 +139,7 @@ export class MessageService {
       });
 
       // Check if OTP exists and code matches
-      if (!otpVerification || otpVerification.code !== otpModel.otpCode) {
+      if (!otpVerification || otpVerification.otpCode !== otpModel.otpCode) {
         return {
           succeeded: false,
           message: "Kod geçersiz veya süresi dolmuş.",

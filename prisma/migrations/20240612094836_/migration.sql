@@ -1,3 +1,0 @@
--- AlterTable
-ALTER TABLE "Category" ALTER COLUMN "modelId" DROP NOT NULL,
-ALTER COLUMN "modelId" DROP DEFAULT;
