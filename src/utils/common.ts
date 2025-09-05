@@ -1,8 +1,5 @@
 import axios from "axios";
 
-/**
- * Interface for user data required for identity verification
- */
 interface CheckUserData {
   firstName: string;
   lastName: string;

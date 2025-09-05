@@ -76,7 +76,7 @@ app.use(function onError(err: any, req: any, res: any, next: any) {
 app.use(Sentry.Handlers.errorHandler());
 
 // Start server
-const PORT = process.env.SITE_PORT || 3000;
+const PORT = process.env.SITE_PORT || 5001;
 
 app.listen(PORT, () => {
   logger.info(`

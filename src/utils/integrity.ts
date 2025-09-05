@@ -1,15 +1,3 @@
-/** request verification
- * device id gelen headerdan boşlukla le ayırıp al
- * şuanki zamanı mod 60 yap
- * currentTime - seconds yapıp dakikayı bul
- * deviceId+"_"+dakika diye key oluştur
- * keyi sha256 hashliyoz
- * hash i applerden gelen hashle karşılaştırıoz
- * yemezse dakikadan 60 çıkar bi dk öncesine git
- * aynı formatta hash oluştur onada bak
- * Integrity check failed.
- * X-Integrity: deviceId Hash
- */
 import { createHash } from "crypto";
 
 /**
