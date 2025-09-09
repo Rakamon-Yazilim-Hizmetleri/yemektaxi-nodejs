@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting seed...");
 
-  // First, create a sample restaurant to use for roles
   const hashedPassword = await bcrypt.hash("admin123", 12);
 
   const adminUser = await prisma.user.upsert({
