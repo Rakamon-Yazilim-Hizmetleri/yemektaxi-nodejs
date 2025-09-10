@@ -46,7 +46,6 @@ async function main() {
     },
   });
 
-
   // Create roles
   const adminRole = await prisma.role.upsert({
     where: { id: "admin-role-id" },
