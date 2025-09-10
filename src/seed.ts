@@ -46,7 +46,6 @@ async function main() {
     },
   });
 
-  console.log("✅ Sample restaurant created");
 
   // Create roles
   const adminRole = await prisma.role.upsert({
