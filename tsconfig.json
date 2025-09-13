@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    // "sourceMap": true, // Uncomment this if you ever need to debug
     "removeComments": true,
 
     "strictPropertyInitialization": false,
